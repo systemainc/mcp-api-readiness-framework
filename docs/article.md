@@ -154,36 +154,68 @@ Here is the scorecard:
   Write Safety
     Level 2/4 — Partial (weighted score)   Checks passed: 1/4
          [PASS] Idempotency-Key header referenced in source
+           Found 5 reference(s): api/expenses.py:7
          [FAIL] Deduplication store or window present
+           No deduplication window found - retried writes may be applied twice
          [FAIL] Conditional-request guard (ETag / If-Match / optimistic lock) present
+           No conditional-request guard found; concurrent agent writes may corrupt state
          [FAIL] Tests explicitly cover duplicate / idempotent request behavior
+           No idempotency/duplicate-request tests found
 
   Boundary Enforcement
     Level 3/4 — Capable (weighted score)   Checks passed: 3/4
          [PASS] Tenant/org/account ID filter present in source
+           Found 22 reference(s): tests/test_expenses.py:14
          [PASS] Role/permission enforcement present in source
+           Found 12 reference(s): api/auth.py:49
          [FAIL] Adversarial negative tests prove cross-tenant access is rejected
+           No adversarial cross-tenant tests found - isolation is asserted, not proven
          [PASS] Token/credential scope is validated at the handler level
+           Found 3 reference(s): api/auth.py:57
 
   Consent & Auth Surface
     Level 4/4 — Robust (weighted score)   Checks passed: 3/4
+         [PASS] Scoped / least-privilege token pattern present
+           Found 2 reference(s): api/auth.py:57
+         [PASS] Auth metadata is machine-discoverable (OpenAPI securitySchemes or equivalent)
+           Found auth metadata in: openapi.yaml
+         [PASS] Per-tool or per-endpoint permission declaration present
+           Found 8 reference(s): api/expenses.py:29
+         [FAIL] Token expiry or rotation mechanism present
+           No token expiry or rotation mechanism found
 
   Forensics
     Level 3/4 — Capable (weighted score)   Checks passed: 3/4
          [PASS] Correlation/trace/request ID propagated in source
+           Found 4 reference(s): api/audit.py:5
          [PASS] Audit log or event emission present on write paths
+           Found 9 reference(s): tests/test_invoices.py:63
          [FAIL] Failure and rejection paths are also captured in audit trail
+           No audit entries on failure paths; audit trail covers only successes
          [PASS] Actor identity (agent/user/service) recorded alongside each audited action
+           Found 8 reference(s): api/expenses.py:50
 
   Interface Legibility
     Level 4/4 — Robust (weighted score)   Checks passed: 3/4
+         [PASS] OpenAPI or tool schema file present
+           Found schema at: openapi.yaml
+         [PASS] Operation descriptions present in schema (not just names/summaries)
+           Descriptions found in: openapi.yaml
+         [PASS] Structured error schema with machine-readable error codes present
+           Found 10 reference(s): api/expenses.py:64
+         [FAIL] Deprecation or versioning signals present (agents can detect breaking changes)
+           No versioning or deprecation signals found
 
   Operational Containment
     Level 1/4 — Not Ready (weighted score)   Checks passed: 0/4
          [FAIL] Timeout configuration present at tool/endpoint level
+           No timeout configuration found; runaway agent calls have no ceiling
          [FAIL] Rate limiting or quota enforcement present
+           No rate limiting or quota found; a looping agent can exhaust resources
          [FAIL] Input size cap or payload size validation present
+           No input size cap found; agent-interpolated context could be arbitrarily large
          [FAIL] Awareness of untrusted / agent-interpolated input surfaces (sanitization, content validation)
+           No untrusted-input handling found; agent-interpolated strings accepted verbatim
 ```
 
 The overall Level 1 is not because Clario is badly built.
