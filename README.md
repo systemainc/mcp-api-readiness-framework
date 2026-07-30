@@ -181,7 +181,7 @@ Running the scorer against it produces:
 
 ```
   Write Safety
-    Level 2/4 — Partial (weighted score)   Checks passed: 1/4
+    Level 2/4 — Partial (weighted score)   Checks passed: 1/6
          [PASS] Idempotency-Key header referenced in source
            Found 5 reference(s): api/expenses.py:7
          [FAIL] Deduplication store or window present
@@ -190,9 +190,13 @@ Running the scorer against it produces:
            No conditional-request guard found; concurrent agent writes may corrupt state
          [FAIL] Tests explicitly cover duplicate / idempotent request behavior
            No idempotency/duplicate-request tests found
+         [FAIL] Deduplication window has a bounded TTL/expiry
+           No TTL/expiry found on the dedup store - it can grow unbounded and never ages out old keys
+         [FAIL] Multi-step writes have compensating/rollback handling
+           No transaction/rollback/compensation handling found - a write spanning multiple resources can fail halfway with no recovery
 
   Boundary Enforcement
-    Level 3/4 — Capable (weighted score)   Checks passed: 3/4
+    Level 3/4 — Capable (weighted score)   Checks passed: 4/6
          [PASS] Tenant/org/account ID filter present in source
            Found 22 reference(s): tests/test_expenses.py:14
          [PASS] Role/permission enforcement present in source
@@ -201,9 +205,13 @@ Running the scorer against it produces:
            No adversarial cross-tenant tests found - isolation is asserted, not proven
          [PASS] Token/credential scope is validated at the handler level
            Found 3 reference(s): api/auth.py:57
+         [PASS] Direct object lookups (single-resource GET/PATCH/DELETE) verify ownership
+           Found 4 reference(s): api/expenses.py:65
+         [FAIL] Bulk/export endpoints are tenant-scoped and row-capped
+           No bulk/export/batch handler found with tenant scoping and a row cap
 
   Consent & Auth Surface
-    Level 4/4 — Robust (weighted score)   Checks passed: 3/4
+    Level 3/4 — Capable (weighted score)   Checks passed: 3/6
          [PASS] Scoped / least-privilege token pattern present
            Found 2 reference(s): api/auth.py:57
          [PASS] Auth metadata is machine-discoverable (OpenAPI securitySchemes or equivalent)
@@ -212,9 +220,13 @@ Running the scorer against it produces:
            Found 8 reference(s): api/expenses.py:29
          [FAIL] Token expiry or rotation mechanism present
            No token expiry or rotation mechanism found
+         [FAIL] Explicit token/session revocation mechanism present
+           No revocation mechanism found - a compromised token can only be waited out, not killed
+         [FAIL] Step-up confirmation required before destructive actions
+           No step-up/reauth pattern found - destructive actions require no more confirmation than a routine read
 
   Forensics
-    Level 3/4 — Capable (weighted score)   Checks passed: 3/4
+    Level 3/4 — Capable (weighted score)   Checks passed: 4/6
          [PASS] Correlation/trace/request ID propagated in source
            Found 4 reference(s): api/audit.py:5
          [PASS] Audit log or event emission present on write paths
@@ -223,9 +235,13 @@ Running the scorer against it produces:
            No audit entries on failure paths; audit trail covers only successes
          [PASS] Actor identity (agent/user/service) recorded alongside each audited action
            Found 8 reference(s): api/expenses.py:50
+         [FAIL] Sensitive reads are audit-logged, not just writes
+           No audit entries on read paths; an agent that reads and exfiltrates sensitive data leaves no trace
+         [PASS] Audit trail storage exposes no update/delete path (append-only)
+           No update/delete calls found against audit log storage - consistent with append-only
 
   Interface Legibility
-    Level 4/4 — Robust (weighted score)   Checks passed: 3/4
+    Level 3/4 — Capable (weighted score)   Checks passed: 3/6
          [PASS] OpenAPI or tool schema file present
            Found schema at: openapi.yaml
          [PASS] Operation descriptions present in schema (not just names/summaries)
@@ -234,9 +250,13 @@ Running the scorer against it produces:
            Found 10 reference(s): api/expenses.py:64
          [FAIL] Deprecation or versioning signals present (agents can detect breaking changes)
            No versioning or deprecation signals found
+         [FAIL] Request/response examples present in schema
+           No example/examples blocks found in schema; agent has only prose to infer valid request shapes
+         [FAIL] Machine-readable parameter constraints (enum/minimum/maximum/pattern) present on request parameters
+           No enum/minimum/maximum/pattern constraints found on request parameters; validation rules exist only in prose
 
   Operational Containment
-    Level 1/4 — Not Ready (weighted score)   Checks passed: 0/4
+    Level 1/4 — Not Ready (weighted score)   Checks passed: 0/6
          [FAIL] Timeout configuration present at tool/endpoint level
            No timeout configuration found; runaway agent calls have no ceiling
          [FAIL] Rate limiting or quota enforcement present
@@ -245,6 +265,10 @@ Running the scorer against it produces:
            No input size cap found; agent-interpolated context could be arbitrarily large
          [FAIL] Awareness of untrusted / agent-interpolated input surfaces (sanitization, content validation)
            No untrusted-input handling found; agent-interpolated strings accepted verbatim
+         [FAIL] Retry-After signal set alongside throttled/429 responses
+           No Retry-After header found on throttled responses; a throttled agent has no signal for how long to back off
+         [FAIL] Pagination or result-size ceiling present on list/query endpoints
+           No page_size/limit ceiling found on list endpoints; an agent can pull unbounded data in one call
 
   Overall Level: 1/4 — Not Ready
 ```

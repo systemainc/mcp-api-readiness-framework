@@ -59,3 +59,19 @@ def test_check_ids_are_stable():
     assert "write_safety.dedup_window" in ids
     assert "write_safety.conditional_requests" in ids
     assert "write_safety.idempotency_tests" in ids
+    assert "write_safety.dedup_expiry" in ids
+    assert "write_safety.multi_step_compensation" in ids
+
+
+def test_clario_fails_dedup_expiry_check():
+    """Clario has no dedup store at all, so it certainly has no TTL on one."""
+    checks = check_write_safety(CLARIO, {})
+    expiry_check = next(c for c in checks if c.id == "write_safety.dedup_expiry")
+    assert not expiry_check.passed
+
+
+def test_clario_fails_multi_step_compensation_check():
+    """Clario has no rollback/compensation handling for multi-resource writes."""
+    checks = check_write_safety(CLARIO, {})
+    compensation_check = next(c for c in checks if c.id == "write_safety.multi_step_compensation")
+    assert not compensation_check.passed

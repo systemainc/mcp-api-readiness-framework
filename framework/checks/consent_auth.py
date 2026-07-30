@@ -93,4 +93,42 @@ def check_consent_auth(target_dir: str, dim_config: dict) -> list[CheckResult]:
         score_contribution=1,
     ))
 
+    # Check 5: explicit token/session revocation (independent of expiry - if a
+    # token is compromised, can it be killed immediately rather than waiting out the TTL?)
+    revocation_hits = grep_files(
+        target_dir,
+        r"revoke_token|revoke_session|invalidate_session|invalidate_token|blacklist_token|kill_session|logout_all_sessions",
+        "**/*.py",
+    )
+    results.append(CheckResult(
+        id="consent_auth.token_revocation",
+        description="Explicit token/session revocation mechanism present",
+        passed=len(revocation_hits) > 0,
+        evidence=(
+            f"Found {len(revocation_hits)} reference(s): {revocation_hits[0][0]}:{revocation_hits[0][1]}"
+            if revocation_hits
+            else "No revocation mechanism found - a compromised token can only be waited out, not killed"
+        ),
+        score_contribution=2,
+    ))
+
+    # Check 6: step-up confirmation gates destructive actions (delete/void/refund)
+    # distinct from routine reads - having per-tool permissions doesn't prove this.
+    step_up_hits = grep_files(
+        target_dir,
+        r"require_step_up|step_up_auth|reauth_required|reauthenticate|confirm_destructive|require_confirmation",
+        "**/*.py",
+    )
+    results.append(CheckResult(
+        id="consent_auth.step_up_confirmation",
+        description="Step-up confirmation required before destructive actions",
+        passed=len(step_up_hits) > 0,
+        evidence=(
+            f"Found {len(step_up_hits)} reference(s): {step_up_hits[0][0]}:{step_up_hits[0][1]}"
+            if step_up_hits
+            else "No step-up/reauth pattern found - destructive actions require no more confirmation than a routine read"
+        ),
+        score_contribution=1,
+    ))
+
     return results

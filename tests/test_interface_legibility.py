@@ -44,3 +44,42 @@ def test_full_coverage_has_structured_errors():
     checks = check_interface_legibility(FULL, {})
     err_check = next(c for c in checks if c.id == "interface_legibility.structured_errors")
     assert err_check.passed
+
+
+def test_full_coverage_has_schema_examples():
+    checks = check_interface_legibility(FULL, {})
+    example_check = next(c for c in checks if c.id == "interface_legibility.schema_examples")
+    assert example_check.passed
+
+
+def test_full_coverage_has_parameter_constraints():
+    checks = check_interface_legibility(FULL, {})
+    constraint_check = next(c for c in checks if c.id == "interface_legibility.parameter_constraints")
+    assert constraint_check.passed
+
+
+def test_no_coverage_lacks_schema_examples():
+    checks = check_interface_legibility(NONE, {})
+    example_check = next(c for c in checks if c.id == "interface_legibility.schema_examples")
+    assert not example_check.passed
+
+
+def test_no_coverage_lacks_parameter_constraints():
+    checks = check_interface_legibility(NONE, {})
+    constraint_check = next(c for c in checks if c.id == "interface_legibility.parameter_constraints")
+    assert not constraint_check.passed
+
+
+def test_clario_lacks_schema_examples():
+    """Clario's schema has rich descriptions but zero worked examples."""
+    checks = check_interface_legibility(CLARIO, {})
+    example_check = next(c for c in checks if c.id == "interface_legibility.schema_examples")
+    assert not example_check.passed
+
+
+def test_clario_lacks_parameter_constraints():
+    """Clario's request bodies (amount_cents, notes, etc.) carry no enum/min/max/pattern -
+    the only enums in the spec describe response-side status values, not request inputs."""
+    checks = check_interface_legibility(CLARIO, {})
+    constraint_check = next(c for c in checks if c.id == "interface_legibility.parameter_constraints")
+    assert not constraint_check.passed

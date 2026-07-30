@@ -88,4 +88,42 @@ def check_operational_containment(target_dir: str, dim_config: dict) -> list[Che
         score_contribution=1,
     ))
 
+    # Check 5: Retry-After signal on throttled responses - without it a
+    # rate-limited agent just retries immediately in a tighter loop.
+    retry_after_hits = grep_files(
+        target_dir,
+        r"Retry-After|retry_after|RETRY_AFTER|X-RateLimit-Reset",
+        "**/*.py",
+    )
+    results.append(CheckResult(
+        id="operational_containment.retry_after",
+        description="Retry-After signal set alongside throttled/429 responses",
+        passed=len(retry_after_hits) > 0,
+        evidence=(
+            f"Found {len(retry_after_hits)} reference(s): {retry_after_hits[0][0]}:{retry_after_hits[0][1]}"
+            if retry_after_hits
+            else "No Retry-After header found on throttled responses; a throttled agent has no signal for how long to back off"
+        ),
+        score_contribution=1,
+    ))
+
+    # Check 6: pagination or result-size ceiling on list/query endpoints -
+    # the input size cap above covers request payloads, not response size.
+    pagination_hits = grep_files(
+        target_dir,
+        r"page_size|per_page|max_results|MAX_PAGE_SIZE|pagination_limit",
+        "**/*.py",
+    )
+    results.append(CheckResult(
+        id="operational_containment.pagination_ceiling",
+        description="Pagination or result-size ceiling present on list/query endpoints",
+        passed=len(pagination_hits) > 0,
+        evidence=(
+            f"Found {len(pagination_hits)} reference(s): {pagination_hits[0][0]}:{pagination_hits[0][1]}"
+            if pagination_hits
+            else "No page_size/limit ceiling found on list endpoints; an agent can pull unbounded data in one call"
+        ),
+        score_contribution=1,
+    ))
+
     return results

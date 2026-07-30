@@ -43,3 +43,36 @@ def test_clario_passes_actor_identity():
     checks = check_forensics(CLARIO, {})
     actor = next(c for c in checks if c.id == "forensics.actor_identity")
     assert actor.passed
+
+
+def test_full_coverage_passes_new_checks():
+    checks = check_forensics(FULL, {})
+    ids = [c.id for c in checks]
+    assert "forensics.read_audit_logging" in ids
+    assert "forensics.append_only_audit" in ids
+    for c in checks:
+        assert c.passed
+
+
+def test_no_coverage_fails_new_checks():
+    checks = check_forensics(NONE, {})
+    read_audit = next(c for c in checks if c.id == "forensics.read_audit_logging")
+    append_only = next(c for c in checks if c.id == "forensics.append_only_audit")
+    assert not read_audit.passed
+    assert not append_only.passed
+
+
+def test_clario_fails_read_audit_logging():
+    """Clario's get_invoice/get_expense read handlers never call audit_log."""
+    checks = check_forensics(CLARIO, {})
+    read_audit = next(c for c in checks if c.id == "forensics.read_audit_logging")
+    assert not read_audit.passed
+
+
+def test_clario_passes_append_only_audit():
+    """Clario's audit.py docstring claims append-only, and the implementation
+    backs it up: only audit_log() (append) and get_audit_records() (read) exist,
+    no update/delete function touches _audit_records."""
+    checks = check_forensics(CLARIO, {})
+    append_only = next(c for c in checks if c.id == "forensics.append_only_audit")
+    assert append_only.passed

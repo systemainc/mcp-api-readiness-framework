@@ -15,10 +15,25 @@ This dimension has two layers:
 """
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 from ..schema import CheckResult
 from ._util import grep_files, glob_exists
+
+
+def _paths_section(content: str) -> str:
+    """Return the `paths:` top-level block only, excluding `components:`.
+
+    Component schemas are often shared between request and response bodies
+    and commonly carry enums that describe *output* state (e.g. an invoice's
+    status), not *input* validation constraints. Scoping to `paths:` avoids
+    crediting those as parameter constraints.
+    """
+    match = re.search(r"^paths:\s*$", content, re.MULTILINE)
+    if not match:
+        return content
+    return content[match.start():]
 
 
 def check_interface_legibility(target_dir: str, dim_config: dict) -> list[CheckResult]:
@@ -111,6 +126,54 @@ def check_interface_legibility(target_dir: str, dim_config: dict) -> list[CheckR
             f"Found {len(version_hits)} reference(s): {version_hits[0][0]}:{version_hits[0][1]}"
             if version_hits
             else "No versioning or deprecation signals found"
+        ),
+        score_contribution=1,
+    ))
+
+    # Check 5: request/response examples - worked examples measurably reduce
+    # malformed agent calls beyond what a prose description achieves alone.
+    example_hits = []
+    for rel_path in openapi_files:
+        try:
+            content = (Path(target_dir) / rel_path).read_text(errors="replace")
+            if re.search(r"^\s*examples?:", content, re.MULTILINE) or '"example"' in content or '"examples"' in content:
+                example_hits.append(rel_path)
+        except OSError:
+            pass
+
+    results.append(CheckResult(
+        id="interface_legibility.schema_examples",
+        description="Request/response examples present in schema",
+        passed=len(example_hits) > 0,
+        evidence=(
+            f"Examples found in: {example_hits[0]}"
+            if example_hits
+            else "No example/examples blocks found in schema; agent has only prose to infer valid request shapes"
+        ),
+        score_contribution=1,
+    ))
+
+    # Check 6: machine-readable parameter constraints (enum/minimum/maximum/pattern)
+    # on request-side parameters, distinct from prose-only descriptions.
+    # Scoped to `paths:` to avoid crediting response-schema enums under `components:`.
+    constraint_hits = []
+    for rel_path in openapi_files:
+        try:
+            content = (Path(target_dir) / rel_path).read_text(errors="replace")
+            paths_content = _paths_section(content)
+            if re.search(r"^\s*(enum|minimum|maximum|pattern)\s*:", paths_content, re.MULTILINE):
+                constraint_hits.append(rel_path)
+        except OSError:
+            pass
+
+    results.append(CheckResult(
+        id="interface_legibility.parameter_constraints",
+        description="Machine-readable parameter constraints (enum/minimum/maximum/pattern) present on request parameters",
+        passed=len(constraint_hits) > 0,
+        evidence=(
+            f"Found parameter constraints in: {constraint_hits[0]}"
+            if constraint_hits
+            else "No enum/minimum/maximum/pattern constraints found on request parameters; validation rules exist only in prose"
         ),
         score_contribution=1,
     ))
