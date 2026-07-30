@@ -1,7 +1,7 @@
 """
 Clario API - Invoice endpoints.
 
-Gaps present in this module (deliberate, for the worked example):
+Gaps present in this module (deliberate, for the Clario Example):
 
 1. Write Safety - Idempotency-Key is accepted on POST /invoices but there is
    no deduplication store backing it. The header value is read and logged but

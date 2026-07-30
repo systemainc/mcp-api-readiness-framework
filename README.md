@@ -112,7 +112,7 @@ git clone https://github.com/systemainc/mcp-api-readiness-framework
 cd mcp-api-readiness-framework
 pip install -r requirements.txt
 
-# Run against the Clario worked example (no credentials needed)
+# Run against the Clario Example (no credentials needed)
 python -m framework.cli scan \
   --config examples/clario/config.yaml \
   --target examples/clario
@@ -163,7 +163,7 @@ you provide.
 Its output appears as a `[Legibility assessment]` note under the Interface
 Legibility dimension.
 
-## The worked example: Clario
+## Clario Example
 
 `examples/clario/` is a deliberately minimal fictional B2B expense-management
 and invoicing API with realistic gaps across several dimensions.
@@ -184,6 +184,11 @@ Running the scorer against it produces:
 
   [4/4] Consent & Auth Surface
   [3/4] Forensics
+         + Correlation/trace ID propagated in source
+         + Audit log present on write paths
+         - Failure and rejection paths captured in audit trail
+         + Actor identity recorded alongside each action
+
   [4/4] Interface Legibility
 
   [1/4] Operational Containment
@@ -197,7 +202,7 @@ Running the scorer against it produces:
 
 The overall score is 1 because Operational Containment is 1 - the minimum
 rule prevents a good score on other dimensions from masking a critical gap.
-The Clario worked example is documented in detail in `docs/article.md`.
+The Clario Example is documented in detail in `docs/article.md`.
 
 ## Running the tests
 
@@ -208,7 +213,7 @@ python -m pytest tests/ -v
 
 No credentials required.
 All tests use fixture-driven data in `tests/fixtures/` and the
-`examples/clario/` worked example.
+Clario Example in `examples/clario/`.
 
 ## Extending the framework
 

@@ -1,7 +1,7 @@
 """
 Clario API - Expense endpoints.
 
-Gaps present in this module (deliberate, for the worked example):
+Gaps present in this module (deliberate, for the Clario Example):
 
 1. Write Safety - POST /expenses has no idempotency support at all. No
    Idempotency-Key header, no dedup window. An agent that retries a

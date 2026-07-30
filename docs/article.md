@@ -135,9 +135,9 @@ The framework checks for them mechanically, in code.
 
 ---
 
-## Scoring Clario: a worked example
+## Scoring the Clario Example
 
-The framework ships with a worked example: Clario, a fictional B2B
+The framework ships with a Clario Example, a fictional B2B
 expense-management and invoicing API.
 Clario is a deliberate teaching tool - it has an OpenAPI spec, scoped tokens,
 tenant isolation, and an audit log.
@@ -391,7 +391,7 @@ git clone https://github.com/systemainc/mcp-api-readiness-framework
 cd mcp-api-readiness-framework
 pip install -r requirements.txt
 
-# Score the Clario worked example
+# Score the Clario Example
 python -m framework.cli scan \
   --config examples/clario/config.yaml \
   --target examples/clario

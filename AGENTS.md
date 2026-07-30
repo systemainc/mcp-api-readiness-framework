@@ -13,7 +13,7 @@ editorial treatment.
 # Install dependencies
 pip install -r requirements.txt
 
-# Run scorer against the worked example (no credentials needed)
+# Run scorer against the Clario Example (no credentials needed)
 python -m framework.cli scan \
   --config examples/clario/config.yaml \
   --target examples/clario
@@ -32,7 +32,7 @@ python -m pytest tests/ -v
 - `framework/legibility/` - optional LLM pass for Interface Legibility; off by default, requires `ANTHROPIC_API_KEY` when enabled.
 - `framework/scanner.py` - orchestrates the full scan and applies the legibility pass if configured.
 - `framework/cli.py` - `scan` and `validate` commands.
-- `examples/clario/` - fictional worked example with deliberate, documented gaps.
+- `examples/clario/` - fictional Clario Example with deliberate, documented gaps.
 - `tests/` - fixture-driven tests; `tests/fixtures/full_coverage/` and `tests/fixtures/no_coverage/` are synthetic codebases used by unit tests.
 
 ## Key design rules
