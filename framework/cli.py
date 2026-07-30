@@ -50,8 +50,8 @@ def _print_scorecard(scorecard) -> None:
         flag = " [insufficient data]" if dim.insufficient_data else ""
         print(f"  [{dim.level}/4] {dim.name}{flag}")
         for check in dim.check_results:
-            icon = "+" if check.passed else "-"
-            print(f"         {icon} {check.description}")
+            label = "PASS" if check.passed else "FAIL"
+            print(f"         [{label}] {check.description}")
             print(f"           {check.evidence}")
         if dim.legibility_note:
             print(f"\n         [Legibility assessment]")

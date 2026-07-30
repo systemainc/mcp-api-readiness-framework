@@ -152,32 +152,32 @@ Here is the scorecard:
   Overall Level: 1/4 — Not Ready
 
   [2/4] Write Safety
-         + Idempotency-Key header referenced in source
-         - Deduplication store or window present
-         - Conditional-request guard (ETag / If-Match) present
-         - Tests explicitly cover duplicate / idempotent request behavior
+         [PASS] Idempotency-Key header referenced in source
+         [FAIL] Deduplication store or window present
+         [FAIL] Conditional-request guard (ETag / If-Match / optimistic lock) present
+         [FAIL] Tests explicitly cover duplicate / idempotent request behavior
 
   [3/4] Boundary Enforcement
-         + Tenant/account ID filter present in source
-         + Role/permission enforcement present in source
-         - Adversarial negative tests prove cross-tenant access is rejected
-         + Token/credential scope is validated at the handler level
+         [PASS] Tenant/org/account ID filter present in source
+         [PASS] Role/permission enforcement present in source
+         [FAIL] Adversarial negative tests prove cross-tenant access is rejected
+         [PASS] Token/credential scope is validated at the handler level
 
   [4/4] Consent & Auth Surface
 
   [3/4] Forensics
-         + Correlation/trace ID propagated in source
-         + Audit log present on write paths
-         - Failure and rejection paths captured in audit trail
-         + Actor identity recorded alongside each action
+         [PASS] Correlation/trace/request ID propagated in source
+         [PASS] Audit log or event emission present on write paths
+         [FAIL] Failure and rejection paths are also captured in audit trail
+         [PASS] Actor identity (agent/user/service) recorded alongside each audited action
 
   [4/4] Interface Legibility
 
   [1/4] Operational Containment
-         - Timeout configuration present at tool/endpoint level
-         - Rate limiting or quota enforcement present
-         - Input size cap or payload size validation present
-         - Untrusted input surface awareness
+         [FAIL] Timeout configuration present at tool/endpoint level
+         [FAIL] Rate limiting or quota enforcement present
+         [FAIL] Input size cap or payload size validation present
+         [FAIL] Awareness of untrusted / agent-interpolated input surfaces (sanitization, content validation)
 ```
 
 The overall Level 1 is not because Clario is badly built.
