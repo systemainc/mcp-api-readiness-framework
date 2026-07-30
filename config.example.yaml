@@ -1,0 +1,49 @@
+# MCP API Readiness Framework - example configuration
+#
+# This is the ONE file you edit to point the scorer at a different codebase.
+# Nothing in framework/ should need to change.
+#
+# Run:
+#   python -m framework.cli validate --config config.example.yaml
+#   python -m framework.cli scan --config config.example.yaml --target /path/to/your/api
+
+target_name: "My API"
+
+# Paths to OpenAPI spec files, relative to the target directory.
+# Supports exact paths or globs (e.g. "**/openapi.yaml").
+openapi_paths:
+  - openapi.yaml
+
+# Glob patterns used to find source and test files in the target directory.
+source_path_glob: "**/*.py"
+test_path_glob: "tests/**/*.py"
+
+# The six dimensions. The id must match a key in framework/checks/__init__.py.
+dimensions:
+  - id: write_safety
+    name: "Write Safety"
+
+  - id: boundary_enforcement
+    name: "Boundary Enforcement"
+
+  - id: consent_auth
+    name: "Consent & Auth Surface"
+
+  - id: forensics
+    name: "Forensics"
+
+  - id: interface_legibility
+    name: "Interface Legibility"
+
+  - id: operational_containment
+    name: "Operational Containment"
+
+# Optional LLM pass for Interface Legibility.
+# Disabled by default - no API key required when disabled.
+# To enable: set enabled: true and export the env var named in api_key_env.
+legibility:
+  enabled: false
+  provider: anthropic
+  model: claude-sonnet-5
+  api_key_env: ANTHROPIC_API_KEY
+  max_tokens: 300

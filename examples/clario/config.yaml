@@ -1,0 +1,49 @@
+# Clario API - Agent Readiness Scorer Configuration
+#
+# Clario is a fictional B2B expense-management and invoicing SaaS.
+# This config points the scorer at the clario/ example codebase.
+#
+# Run from repo root:
+#   python -m framework.cli scan --config examples/clario/config.yaml --target examples/clario
+#   python -m framework.cli scan --config examples/clario/config.yaml --target examples/clario --output out/clario-scorecard.json
+
+target_name: "Clario Expense & Invoicing API"
+
+# Relative paths (from target dir) to OpenAPI spec files.
+openapi_paths:
+  - openapi.yaml
+
+# Glob patterns used by checks that scan source files.
+test_path_glob: "tests/**/*.py"
+source_path_glob: "**/*.py"
+
+# The six dimensions. The id must match a key in framework/checks/__init__.py.
+# The name is what appears in the scorecard.
+dimensions:
+  - id: write_safety
+    name: "Write Safety"
+
+  - id: boundary_enforcement
+    name: "Boundary Enforcement"
+
+  - id: consent_auth
+    name: "Consent & Auth Surface"
+
+  - id: forensics
+    name: "Forensics"
+
+  - id: interface_legibility
+    name: "Interface Legibility"
+
+  - id: operational_containment
+    name: "Operational Containment"
+
+# Optional LLM pass for Interface Legibility.
+# When enabled: off by default - no API key required.
+# To enable: set enabled: true and export ANTHROPIC_API_KEY.
+legibility:
+  enabled: false
+  provider: anthropic
+  model: claude-sonnet-5
+  api_key_env: ANTHROPIC_API_KEY
+  max_tokens: 300

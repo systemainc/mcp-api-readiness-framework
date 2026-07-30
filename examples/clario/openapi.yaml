@@ -1,0 +1,335 @@
+openapi: "3.1.0"
+info:
+  title: Clario Expense & Invoicing API
+  version: "1.0.0"
+  description: >
+    B2B expense management and invoicing API for the Clario platform.
+    Use this API to create invoices, submit expenses, and manage approvals.
+
+servers:
+  - url: https://api.clario.example.com/v1
+
+security:
+  - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: >
+        Bearer token issued via the Clario developer portal.
+        Include all required scopes for the operations you intend to call.
+
+  schemas:
+    Invoice:
+      type: object
+      properties:
+        id:
+          type: string
+        account_id:
+          type: string
+        vendor:
+          type: string
+        amount_cents:
+          type: integer
+        currency:
+          type: string
+          default: USD
+        due_date:
+          type: string
+          format: date
+        status:
+          type: string
+          enum: [draft, sent, paid, void]
+        created_at:
+          type: string
+          format: date-time
+
+    Expense:
+      type: object
+      properties:
+        id:
+          type: string
+        account_id:
+          type: string
+        category:
+          type: string
+        amount_cents:
+          type: integer
+        currency:
+          type: string
+        merchant:
+          type: string
+        notes:
+          type: string
+        date:
+          type: string
+          format: date
+        status:
+          type: string
+          enum: [pending_review, approved, rejected]
+        submitted_at:
+          type: string
+          format: date-time
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        error_code:
+          type: string
+
+paths:
+  /invoices:
+    get:
+      operationId: listInvoices
+      summary: List invoices
+      description: Returns all invoices for the authenticated account.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of invoices
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Invoice"
+        "401":
+          description: Missing or invalid bearer token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Token lacks required scope
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    post:
+      operationId: createInvoice
+      summary: Create invoice
+      # Gap: description does not explain what happens on duplicate submission,
+      # or that the Idempotency-Key header is accepted (but not enforced).
+      # An agent has no way to know whether retrying a failed call is safe.
+      description: Creates a new invoice in draft status.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          description: Client-generated key to deduplicate submissions.
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [vendor, amount_cents, currency]
+              properties:
+                vendor:
+                  type: string
+                amount_cents:
+                  type: integer
+                currency:
+                  type: string
+                due_date:
+                  type: string
+                  format: date
+      responses:
+        "201":
+          description: Invoice created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invoice"
+        "401":
+          description: Missing or invalid bearer token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /invoices/{invoice_id}:
+    get:
+      operationId: getInvoice
+      summary: Get invoice
+      description: Retrieve a single invoice by ID.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: invoice_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Invoice object
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invoice"
+        "404":
+          description: Invoice not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /invoices/{invoice_id}/void:
+    post:
+      operationId: voidInvoice
+      summary: Void invoice
+      # Gap: no description. An agent cannot determine from this schema
+      # alone whether voiding is reversible, what preconditions must hold
+      # (e.g. invoice must not be paid), or what error_code it will receive
+      # if the precondition fails.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: invoice_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Invoice voided
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invoice"
+        "422":
+          description: Cannot void
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /expenses:
+    get:
+      operationId: listExpenses
+      summary: List expenses
+      description: Returns all expenses for the authenticated account.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of expenses
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Expense"
+
+    post:
+      operationId: submitExpense
+      summary: Submit expense
+      # Gap: no description of whether this is idempotent, what the notes
+      # field size limit is, or what happens if category is not one of the
+      # recognized values.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [category, amount_cents, date]
+              properties:
+                category:
+                  type: string
+                amount_cents:
+                  type: integer
+                currency:
+                  type: string
+                merchant:
+                  type: string
+                notes:
+                  type: string
+                date:
+                  type: string
+                  format: date
+      responses:
+        "201":
+          description: Expense submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Expense"
+
+  /expenses/{expense_id}:
+    get:
+      operationId: getExpense
+      summary: Get expense
+      description: Retrieve a single expense by ID.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: expense_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Expense object
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Expense"
+        "404":
+          description: Expense not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /expenses/{expense_id}/approve:
+    post:
+      operationId: approveExpense
+      summary: Approve expense
+      description: Marks a pending expense as approved.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: expense_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Expense approved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Expense"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"

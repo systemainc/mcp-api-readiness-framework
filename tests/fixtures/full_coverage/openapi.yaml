@@ -1,0 +1,31 @@
+openapi: "3.1.0"
+info:
+  title: Full Coverage API
+  version: "1.0.0"
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+paths:
+  /items:
+    post:
+      operationId: createItem
+      description: >
+        Creates an item. Supply an Idempotency-Key header to safely retry
+        failed calls. Returns ITEM_ALREADY_EXISTS (error_code) if the key
+        was already used within the 24-hour deduplication window.
+      responses:
+        "201":
+          description: Item created
+        "422":
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error_code:
+                    type: string
+                  error:
+                    type: string

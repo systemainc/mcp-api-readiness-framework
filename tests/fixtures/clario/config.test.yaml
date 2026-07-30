@@ -1,0 +1,21 @@
+# Test config - points at the Clario example directory
+target_name: "Clario Test"
+openapi_paths:
+  - openapi.yaml
+
+dimensions:
+  - id: write_safety
+    name: "Write Safety"
+  - id: boundary_enforcement
+    name: "Boundary Enforcement"
+  - id: consent_auth
+    name: "Consent & Auth Surface"
+  - id: forensics
+    name: "Forensics"
+  - id: interface_legibility
+    name: "Interface Legibility"
+  - id: operational_containment
+    name: "Operational Containment"
+
+legibility:
+  enabled: false
