@@ -8,6 +8,10 @@ This is the third entry in a series on measurable AI engineering maturity.
 See also: [ai-engineering-maturity-metrics-framework](https://github.com/systemainc/ai-engineering-maturity-metrics-framework)
 and [loop-engineering-tutorial](https://github.com/systemainc/loop-engineering-tutorial).
 
+Just want to see it?
+Open [`docs/dashboard.html`](./docs/dashboard.html) in a browser - no server, no build step.
+It ships with the Clario Example's real scorecard baked in.
+
 ---
 
 ## The problem
@@ -125,6 +129,12 @@ python -m framework.cli scan \
   --config examples/clario/config.yaml \
   --target examples/clario \
   --output out/clario-scorecard.json
+
+# Write scorecard data for docs/dashboard.html to pick up in place of its sample
+python -m framework.cli scan \
+  --config examples/clario/config.yaml \
+  --target examples/clario \
+  --dashboard-data docs/dashboard-data.js
 ```
 
 ## Point it at your own codebase

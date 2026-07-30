@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MCP API Readiness Scorecard</title>
+<style>
+  :root {
+    color-scheme: light;
+    --surface-1:   #fcfcfb;
+    --page:        #f9f9f7;
+    --text-1:      #0b0b0b;
+    --text-2:      #52514e;
+    --text-muted:  #898781;
+    --gridline:    #e1e0d9;
+    --border:      rgba(11,11,11,0.10);
+    --status-good:     #0ca30c;
+    --status-warning:  #b9790a;
+    --status-serious:  #c65a30;
+    --status-critical: #d03b3b;
+    --status-good-bg:     rgba(12,163,12,0.10);
+    --status-warning-bg:  rgba(250,178,25,0.16);
+    --status-serious-bg:  rgba(236,131,90,0.14);
+    --status-critical-bg: rgba(208,59,59,0.10);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --surface-1:   #1a1a19;
+      --page:        #0d0d0d;
+      --text-1:      #ffffff;
+      --text-2:      #c3c2b7;
+      --text-muted:  #898781;
+      --gridline:    #2c2c2a;
+      --border:      rgba(255,255,255,0.10);
+      --status-good:     #0ca30c;
+      --status-warning:  #fab219;
+      --status-serious:  #ec835a;
+      --status-critical: #e66767;
+      --status-good-bg:     rgba(12,163,12,0.16);
+      --status-warning-bg:  rgba(250,178,25,0.14);
+      --status-serious-bg:  rgba(236,131,90,0.14);
+      --status-critical-bg: rgba(208,59,59,0.16);
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 0;
+    background: var(--page);
+    color: var(--text-1);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    line-height: 1.45;
+  }
+  .wrap {
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 40px 20px 80px;
+  }
+  header.top {
+    margin-bottom: 28px;
+  }
+  header.top .kicker {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin: 0 0 6px;
+  }
+  header.top h1 {
+    font-size: 26px;
+    margin: 0 0 4px;
+    font-weight: 700;
+  }
+  header.top .target {
+    color: var(--text-2);
+    font-size: 15px;
+    margin: 0;
+    word-break: break-word;
+  }
+
+  .overall {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 18px;
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 22px;
+    margin: 20px 0 28px;
+  }
+  .overall .badge-level {
+    font-size: 34px;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .overall .badge-sub { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+  .overall .overall-text { flex: 1; min-width: 200px; }
+  .overall .overall-text .label { font-size: 15px; font-weight: 600; }
+  .overall .overall-text .note { font-size: 13px; color: var(--text-2); margin-top: 4px; }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+  }
+  .pill.good     { color: var(--status-good);     background: var(--status-good-bg); }
+  .pill.warning  { color: var(--status-warning);  background: var(--status-warning-bg); }
+  .pill.serious  { color: var(--status-serious);  background: var(--status-serious-bg); }
+  .pill.critical { color: var(--status-critical); background: var(--status-critical-bg); }
+
+  .dims {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .dim-card {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    min-width: 0;
+  }
+  .dim-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 4px;
+  }
+  .dim-head h2 {
+    font-size: 17px;
+    margin: 0;
+    font-weight: 700;
+    min-width: 0;
+  }
+  .dim-sub {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--text-2);
+    margin: 4px 0 14px;
+  }
+  .dim-sub .tally { font-variant-numeric: tabular-nums; color: var(--text-muted); }
+  .insufficient {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--status-serious);
+  }
+
+  .checks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+  .check {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 4px 10px;
+    align-items: baseline;
+  }
+  .check .tag {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    padding: 1px 7px;
+    border-radius: 5px;
+    line-height: 1.6;
+  }
+  .check .tag.pass { color: var(--status-good); background: var(--status-good-bg); }
+  .check .tag.fail { color: var(--status-critical); background: var(--status-critical-bg); }
+  .check .desc { font-size: 13.5px; font-weight: 600; min-width: 0; }
+  .check .evidence {
+    grid-column: 2 / -1;
+    font-size: 12.5px;
+    color: var(--text-muted);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    word-break: break-word;
+  }
+
+  .legibility-note {
+    margin-top: 14px;
+    padding: 12px 14px;
+    border-left: 3px solid var(--status-warning);
+    background: var(--status-warning-bg);
+    border-radius: 0 8px 8px 0;
+    font-size: 13px;
+  }
+  .legibility-note .lnl {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+  }
+
+  .scan-errors {
+    margin-top: 24px;
+    padding: 14px 18px;
+    border: 1px solid var(--status-serious);
+    background: var(--status-serious-bg);
+    border-radius: 10px;
+    font-size: 13px;
+  }
+  .scan-errors h3 { margin: 0 0 6px; font-size: 13px; }
+  .scan-errors ul { margin: 0; padding-left: 18px; }
+
+  footer.note {
+    margin-top: 36px;
+    padding-top: 16px;
+    border-top: 1px solid var(--gridline);
+    font-size: 12.5px;
+    color: var(--text-muted);
+  }
+  footer.note code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    background: var(--gridline);
+    padding: 1px 5px;
+    border-radius: 4px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <p class="kicker">MCP API Readiness Framework</p>
+    <h1>MCP API Readiness Scorecard</h1>
+    <p class="target" id="target-name"></p>
+  </header>
+
+  <div class="overall" id="overall"></div>
+
+  <div class="dims" id="dims"></div>
+
+  <div id="scan-errors"></div>
+
+  <footer class="note" id="footer-note"></footer>
+</div>
+
+<!--
+  Optional: if a `dashboard-data.js` file sits next to this HTML file, it is
+  loaded here and sets window.MCP_READINESS_DATA. That's the output of
+  `python -m framework.cli scan --dashboard-data <path>` (see README.md) -
+  run the scanner against your own API and drop the generated file next to
+  this one to replace the illustrative Clario Example below with your real
+  scorecard. Missing the file is not an error: the browser just skips the
+  tag and the sample data renders.
+-->
+<script src="dashboard-data.js"></script>
+<script>
+// Baked-in sample: the exact output of
+//   python -m framework.cli scan --config examples/clario/config.yaml --target examples/clario
+// for the fictional Clario Example (see README.md / examples/clario), so this
+// page renders something real with zero setup.
+const SAMPLE_DATA = {
+  "target": "Clario Expense & Invoicing API",
+  "dimensions": [
+    {
+      "id": "write_safety",
+      "name": "Write Safety",
+      "level": 2,
+      "check_results": [
+        { "id": "write_safety.idempotency_key", "description": "Idempotency-Key header referenced in source", "passed": true, "evidence": "Found 5 reference(s): api/expenses.py:7", "score_contribution": 2 },
+        { "id": "write_safety.dedup_window", "description": "Deduplication store or window present", "passed": false, "evidence": "No deduplication window found - retried writes may be applied twice", "score_contribution": 2 },
+        { "id": "write_safety.conditional_requests", "description": "Conditional-request guard (ETag / If-Match / optimistic lock) present", "passed": false, "evidence": "No conditional-request guard found; concurrent agent writes may corrupt state", "score_contribution": 1 },
+        { "id": "write_safety.idempotency_tests", "description": "Tests explicitly cover duplicate / idempotent request behavior", "passed": false, "evidence": "No idempotency/duplicate-request tests found", "score_contribution": 1 }
+      ],
+      "legibility_note": null,
+      "insufficient_data": false
+    },
+    {
+      "id": "boundary_enforcement",
+      "name": "Boundary Enforcement",
+      "level": 3,
+      "check_results": [
+        { "id": "boundary_enforcement.tenant_filter", "description": "Tenant/org/account ID filter present in source", "passed": true, "evidence": "Found 22 reference(s): tests/test_expenses.py:14", "score_contribution": 2 },
+        { "id": "boundary_enforcement.role_check", "description": "Role/permission enforcement present in source", "passed": true, "evidence": "Found 12 reference(s): api/auth.py:49", "score_contribution": 2 },
+        { "id": "boundary_enforcement.adversarial_tests", "description": "Adversarial negative tests prove cross-tenant access is rejected", "passed": false, "evidence": "No adversarial cross-tenant tests found - isolation is asserted, not proven", "score_contribution": 2 },
+        { "id": "boundary_enforcement.scope_validation", "description": "Token/credential scope is validated at the handler level", "passed": true, "evidence": "Found 3 reference(s): api/auth.py:57", "score_contribution": 1 }
+      ],
+      "legibility_note": null,
+      "insufficient_data": false
+    },
+    {
+      "id": "consent_auth",
+      "name": "Consent & Auth Surface",
+      "level": 4,
+      "check_results": [
+        { "id": "consent_auth.scoped_tokens", "description": "Scoped / least-privilege token pattern present", "passed": true, "evidence": "Found 2 reference(s): api/auth.py:57", "score_contribution": 2 },
+        { "id": "consent_auth.discoverable_auth", "description": "Auth metadata is machine-discoverable (OpenAPI securitySchemes or equivalent)", "passed": true, "evidence": "Found auth metadata in: openapi.yaml", "score_contribution": 2 },
+        { "id": "consent_auth.per_tool_permission", "description": "Per-tool or per-endpoint permission declaration present", "passed": true, "evidence": "Found 8 reference(s): api/expenses.py:29", "score_contribution": 2 },
+        { "id": "consent_auth.token_expiry", "description": "Token expiry or rotation mechanism present", "passed": false, "evidence": "No token expiry or rotation mechanism found", "score_contribution": 1 }
+      ],
+      "legibility_note": null,
+      "insufficient_data": false
+    },
+    {
+      "id": "forensics",
+      "name": "Forensics",
+      "level": 3,
+      "check_results": [
+        { "id": "forensics.correlation_id", "description": "Correlation/trace/request ID propagated in source", "passed": true, "evidence": "Found 4 reference(s): api/audit.py:5", "score_contribution": 2 },
+        { "id": "forensics.audit_log", "description": "Audit log or event emission present on write paths", "passed": true, "evidence": "Found 9 reference(s): tests/test_invoices.py:63", "score_contribution": 2 },
+        { "id": "forensics.failure_auditing", "description": "Failure and rejection paths are also captured in audit trail", "passed": false, "evidence": "No audit entries on failure paths; audit trail covers only successes", "score_contribution": 2 },
+        { "id": "forensics.actor_identity", "description": "Actor identity (agent/user/service) recorded alongside each audited action", "passed": true, "evidence": "Found 8 reference(s): api/expenses.py:50", "score_contribution": 1 }
+      ],
+      "legibility_note": null,
+      "insufficient_data": false
+    },
+    {
+      "id": "interface_legibility",
+      "name": "Interface Legibility",
+      "level": 4,
+      "check_results": [
+        { "id": "interface_legibility.openapi_present", "description": "OpenAPI or tool schema file present", "passed": true, "evidence": "Found schema at: openapi.yaml", "score_contribution": 2 },
+        { "id": "interface_legibility.operation_descriptions", "description": "Operation descriptions present in schema (not just names/summaries)", "passed": true, "evidence": "Descriptions found in: openapi.yaml", "score_contribution": 2 },
+        { "id": "interface_legibility.structured_errors", "description": "Structured error schema with machine-readable error codes present", "passed": true, "evidence": "Found 10 reference(s): api/expenses.py:64", "score_contribution": 2 },
+        { "id": "interface_legibility.versioning", "description": "Deprecation or versioning signals present (agents can detect breaking changes)", "passed": false, "evidence": "No versioning or deprecation signals found", "score_contribution": 1 }
+      ],
+      "legibility_note": null,
+      "insufficient_data": false
+    },
+    {
+      "id": "operational_containment",
+      "name": "Operational Containment",
+      "level": 1,
+      "check_results": [
+        { "id": "operational_containment.timeouts", "description": "Timeout configuration present at tool/endpoint level", "passed": false, "evidence": "No timeout configuration found; runaway agent calls have no ceiling", "score_contribution": 2 },
+        { "id": "operational_containment.rate_limits", "description": "Rate limiting or quota enforcement present", "passed": false, "evidence": "No rate limiting or quota found; a looping agent can exhaust resources", "score_contribution": 2 },
+        { "id": "operational_containment.input_size_cap", "description": "Input size cap or payload size validation present", "passed": false, "evidence": "No input size cap found; agent-interpolated context could be arbitrarily large", "score_contribution": 1 },
+        { "id": "operational_containment.untrusted_input", "description": "Awareness of untrusted / agent-interpolated input surfaces (sanitization, content validation)", "passed": false, "evidence": "No untrusted-input handling found; agent-interpolated strings accepted verbatim", "score_contribution": 1 }
+      ],
+      "legibility_note": null,
+      "insufficient_data": false
+    }
+  ],
+  "overall_level": 1,
+  "scan_errors": [],
+  "legibility_enabled": false
+};
+
+// window.MCP_READINESS_DATA (set by dashboard-data.js above, if present) wins
+// over the baked-in sample.
+const DATA = window.MCP_READINESS_DATA || SAMPLE_DATA;
+const IS_SAMPLE = !window.MCP_READINESS_DATA;
+
+const LEVEL_INFO = {
+  1: { label: "Not Ready", status: "critical" },
+  2: { label: "Partial",   status: "serious" },
+  3: { label: "Capable",   status: "warning" },
+  4: { label: "Robust",    status: "good" },
+};
+
+const DIM_DISPLAY_ORDER = [
+  "write_safety",
+  "boundary_enforcement",
+  "consent_auth",
+  "forensics",
+  "interface_legibility",
+  "operational_containment",
+];
+
+function el(tag, attrs, children) {
+  const node = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (k === "class") node.className = v;
+    else if (k === "text") node.textContent = v;
+    else node.setAttribute(k, v);
+  }
+  for (const child of children || []) {
+    if (child) node.appendChild(child);
+  }
+  return node;
+}
+
+function levelPill(level) {
+  const info = LEVEL_INFO[level] || { label: "?", status: "serious" };
+  return el("span", { class: `pill ${info.status}`, text: `Level ${level}/4 — ${info.label}` });
+}
+
+function renderOverall(data) {
+  const container = document.getElementById("overall");
+  const info = LEVEL_INFO[data.overall_level] || { label: "?", status: "serious" };
+  const badge = el("div", {}, [
+    el("div", { class: `badge-level`, style: `color: var(--status-${info.status})`, text: `${data.overall_level}/4` }),
+    el("div", { class: "badge-sub", text: info.label }),
+  ]);
+  const text = el("div", { class: "overall-text" }, [
+    el("div", { class: "label", text: "Overall level (minimum across all six dimensions)" }),
+    el("div", { class: "note", text: "A high score on five dimensions with a 1 on any single dimension is not “mostly ready” — it’s a liability. The floor is the score." }),
+  ]);
+  container.appendChild(badge);
+  container.appendChild(text);
+}
+
+function renderDim(dim) {
+  const passed = dim.check_results.filter(c => c.passed).length;
+  const total = dim.check_results.length;
+
+  const head = el("div", { class: "dim-head" }, [
+    el("h2", { text: dim.name }),
+    levelPill(dim.level),
+  ]);
+
+  const sub = el("div", { class: "dim-sub" }, [
+    el("span", { class: "tally", text: `Checks passed: ${passed}/${total}` }),
+    dim.insufficient_data ? el("span", { class: "insufficient", text: "Insufficient data" }) : null,
+  ]);
+
+  const checksList = el("ul", { class: "checks" },
+    dim.check_results.map(check => el("li", { class: "check" }, [
+      el("span", { class: `tag ${check.passed ? "pass" : "fail"}`, text: check.passed ? "PASS" : "FAIL" }),
+      el("span", { class: "desc", text: check.description }),
+      el("span", { class: "evidence", text: check.evidence }),
+    ]))
+  );
+
+  const card = el("div", { class: "dim-card" }, [head, sub, checksList]);
+
+  if (dim.legibility_note) {
+    card.appendChild(el("div", { class: "legibility-note" }, [
+      el("div", { class: "lnl", text: "Legibility assessment" }),
+      el("div", { text: dim.legibility_note }),
+    ]));
+  }
+
+  return card;
+}
+
+function renderScanErrors(data) {
+  if (!data.scan_errors || data.scan_errors.length === 0) return;
+  const container = document.getElementById("scan-errors");
+  container.appendChild(el("div", { class: "scan-errors" }, [
+    el("h3", { text: "Scan warnings" }),
+    el("ul", {}, data.scan_errors.map(err => el("li", { text: err }))),
+  ]));
+}
+
+function renderFooter() {
+  const container = document.getElementById("footer-note");
+  if (IS_SAMPLE) {
+    container.appendChild(document.createTextNode(
+      "Showing the illustrative Clario Example (see README.md and examples/clario/) — not live data. " +
+      "Run "
+    ));
+    container.appendChild(el("code", { text: "python -m framework.cli scan --config <config> --target <dir> --dashboard-data docs/dashboard-data.js" }));
+    container.appendChild(document.createTextNode(
+      " and reload this page to see your own API's scorecard instead."
+    ));
+  } else {
+    container.appendChild(document.createTextNode(
+      "Loaded from dashboard-data.js next to this file. Re-run the scan and reload to refresh."
+    ));
+  }
+}
+
+document.getElementById("target-name").textContent = DATA.target;
+renderOverall(DATA);
+
+const dimsById = Object.fromEntries(DATA.dimensions.map(d => [d.id, d]));
+const orderedIds = [
+  ...DIM_DISPLAY_ORDER.filter(id => id in dimsById),
+  ...Object.keys(dimsById).filter(id => !DIM_DISPLAY_ORDER.includes(id)),
+];
+const dimsContainer = document.getElementById("dims");
+for (const id of orderedIds) {
+  dimsContainer.appendChild(renderDim(dimsById[id]));
+}
+
+renderScanErrors(DATA);
+renderFooter();
+</script>
+</body>
+</html>

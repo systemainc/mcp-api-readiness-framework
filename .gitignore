@@ -9,3 +9,4 @@ venv/
 out/
 *.json.out
 .DS_Store
+docs/dashboard-data.js

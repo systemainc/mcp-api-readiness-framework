@@ -68,14 +68,27 @@ def _print_scorecard(scorecard) -> None:
         print()
 
 
+def _write_dashboard_data(scorecard, path: str) -> None:
+    """Emit window.MCP_READINESS_DATA = {...}; for docs/dashboard.html to pick up.
+
+    Same shape as the --output JSON (asdict(scorecard)), just wrapped as a JS
+    assignment so it can be loaded via <script src="..."> from a file:// page
+    with no build step or fetch/CORS concerns.
+    """
+    payload = json.dumps(asdict(scorecard), indent=2)
+    Path(path).write_text(f"window.MCP_READINESS_DATA = {payload};\n")
+
+
 def cmd_scan(args: argparse.Namespace) -> int:
     target = args.target or str(Path(args.config).parent)
     scorecard = run_scan(args.config, target)
     _print_scorecard(scorecard)
     if args.output:
-        from dataclasses import asdict
         Path(args.output).write_text(json.dumps(asdict(scorecard), indent=2))
         print(f"Scorecard written to {args.output}")
+    if args.dashboard_data:
+        _write_dashboard_data(scorecard, args.dashboard_data)
+        print(f"Dashboard data written to {args.dashboard_data}")
     return 0
 
 
@@ -97,6 +110,12 @@ def main() -> int:
     scan_p.add_argument("--config", required=True, help="Path to config YAML")
     scan_p.add_argument("--target", default=None, help="Path to target codebase (default: config dir)")
     scan_p.add_argument("--output", default=None, help="Write JSON scorecard to this path")
+    scan_p.add_argument(
+        "--dashboard-data",
+        default=None,
+        help="Write a window.MCP_READINESS_DATA=...; JS file to this path, "
+        "for docs/dashboard.html to load in place of its sample data",
+    )
 
     val_p = sub.add_parser("validate", help="Validate config without scanning")
     val_p.add_argument("--config", required=True)

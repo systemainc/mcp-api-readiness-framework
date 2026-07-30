@@ -31,9 +31,10 @@ python -m pytest tests/ -v
 - `framework/scoring/engine.py` - maps check results to 1-4 levels; overall level is the minimum across all dimensions.
 - `framework/legibility/` - optional LLM pass for Interface Legibility; off by default, requires `ANTHROPIC_API_KEY` when enabled.
 - `framework/scanner.py` - orchestrates the full scan and applies the legibility pass if configured.
-- `framework/cli.py` - `scan` and `validate` commands.
+- `framework/cli.py` - `scan` and `validate` commands. `scan --dashboard-data <path>` emits the scorecard as `window.MCP_READINESS_DATA = {...};` for `docs/dashboard.html`.
 - `examples/clario/` - fictional Clario Example with deliberate, documented gaps.
 - `tests/` - fixture-driven tests; `tests/fixtures/full_coverage/` and `tests/fixtures/no_coverage/` are synthetic codebases used by unit tests.
+- `docs/dashboard.html` - single-file, no-build dashboard for the scorecard; ships with the Clario Example's real scorecard baked in as sample data, overridden by a sibling `docs/dashboard-data.js` if present (not committed - generated via `scan --dashboard-data`). `index.html` at repo root redirects to it.
 
 ## Key design rules
 
