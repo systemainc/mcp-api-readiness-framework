@@ -48,7 +48,10 @@ def _print_scorecard(scorecard) -> None:
     for dim in ordered:
         label = _LEVEL_LABELS.get(dim.level, "?")
         flag = " [insufficient data]" if dim.insufficient_data else ""
-        print(f"  [{dim.level}/4] {dim.name}{flag}")
+        passed = sum(1 for check in dim.check_results if check.passed)
+        total = len(dim.check_results)
+        print(f"  {dim.name}{flag}")
+        print(f"    Level {dim.level}/4 — {label} (weighted score)   Checks passed: {passed}/{total}")
         for check in dim.check_results:
             label = "PASS" if check.passed else "FAIL"
             print(f"         [{label}] {check.description}")

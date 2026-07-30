@@ -151,29 +151,35 @@ Here is the scorecard:
   MCP API Readiness: Clario Expense & Invoicing API
   Overall Level: 1/4 — Not Ready
 
-  [2/4] Write Safety
+  Write Safety
+    Level 2/4 — Partial (weighted score)   Checks passed: 1/4
          [PASS] Idempotency-Key header referenced in source
          [FAIL] Deduplication store or window present
          [FAIL] Conditional-request guard (ETag / If-Match / optimistic lock) present
          [FAIL] Tests explicitly cover duplicate / idempotent request behavior
 
-  [3/4] Boundary Enforcement
+  Boundary Enforcement
+    Level 3/4 — Capable (weighted score)   Checks passed: 3/4
          [PASS] Tenant/org/account ID filter present in source
          [PASS] Role/permission enforcement present in source
          [FAIL] Adversarial negative tests prove cross-tenant access is rejected
          [PASS] Token/credential scope is validated at the handler level
 
-  [4/4] Consent & Auth Surface
+  Consent & Auth Surface
+    Level 4/4 — Robust (weighted score)   Checks passed: 3/4
 
-  [3/4] Forensics
+  Forensics
+    Level 3/4 — Capable (weighted score)   Checks passed: 3/4
          [PASS] Correlation/trace/request ID propagated in source
          [PASS] Audit log or event emission present on write paths
          [FAIL] Failure and rejection paths are also captured in audit trail
          [PASS] Actor identity (agent/user/service) recorded alongside each audited action
 
-  [4/4] Interface Legibility
+  Interface Legibility
+    Level 4/4 — Robust (weighted score)   Checks passed: 3/4
 
-  [1/4] Operational Containment
+  Operational Containment
+    Level 1/4 — Not Ready (weighted score)   Checks passed: 0/4
          [FAIL] Timeout configuration present at tool/endpoint level
          [FAIL] Rate limiting or quota enforcement present
          [FAIL] Input size cap or payload size validation present
