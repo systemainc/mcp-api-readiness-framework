@@ -1,8 +1,8 @@
 # Do you think your APIs are ready for MCP exposure?
 
-The MCP API Readiness Framework is an open-source tool that scores your API
-against six dimensions and tells you exactly which gaps you need to close
-before you expose it as callable MCP tools in production.
+The MCP API Readiness Framework is a tool I built and am open-sourcing.
+It scores your API against six dimensions and tells you exactly which gaps
+you need to close before you expose it as callable MCP tools in production.
 This post walks through a real scored example, explains what the scoring
 actually checks, and shows you what the gaps look like in code.
 
