@@ -6,6 +6,8 @@ you need to close before you expose it as callable MCP tools in production.
 This post walks through a real scored example, explains what the scoring
 actually checks, and shows you what the gaps look like in code.
 
+**Code: [github.com/systemainc/mcp-api-readiness-framework](https://github.com/systemainc/mcp-api-readiness-framework)** — MIT licensed, full scorer and dashboard, no waitlist.
+
 You wrapped your API in an MCP server.
 The demo worked.
 You shipped it.
@@ -493,3 +495,5 @@ about which gaps to close before which agent use cases go to production.
 
 The alternative - discovering the gaps when the first agent causes an incident
 in production - is the thing this framework exists to prevent.
+
+**Code: [github.com/systemainc/mcp-api-readiness-framework](https://github.com/systemainc/mcp-api-readiness-framework)** — MIT licensed, full scorer and dashboard, no waitlist.
