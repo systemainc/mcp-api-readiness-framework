@@ -90,4 +90,46 @@ def check_boundary_enforcement(target_dir: str, dim_config: dict) -> list[CheckR
         score_contribution=1,
     ))
 
+    # Check 5: direct object lookups (single-resource GET/PATCH/DELETE by ID)
+    # verify ownership - the classic IDOR gap. Distinct from the list-scoping
+    # pattern above: a list handler *includes* matching rows (tenant_id ==),
+    # a single-resource handler must *reject* a non-owned one (tenant_id !=).
+    object_ownership_hits = grep_files(
+        target_dir,
+        r"assert_owner|verify_ownership|check_ownership|owns_resource|belongs_to_tenant"
+        r"|(account_id|tenant_id|org_id|workspace_id)\"?\]\s*!=\s*ctx"
+        r"|(account_id|tenant_id|org_id|workspace_id)\s*!=\s*ctx\.",
+        "**/*.py",
+    )
+    results.append(CheckResult(
+        id="boundary_enforcement.object_ownership_check",
+        description="Direct object lookups (single-resource GET/PATCH/DELETE) verify ownership",
+        passed=len(object_ownership_hits) > 0,
+        evidence=(
+            f"Found {len(object_ownership_hits)} reference(s): {object_ownership_hits[0][0]}:{object_ownership_hits[0][1]}"
+            if object_ownership_hits
+            else "No ownership check found on single-resource handlers - an agent guessing/enumerating IDs may read another tenant's resource"
+        ),
+        score_contribution=2,
+    ))
+
+    # Check 6: bulk/export endpoints are scoped and capped - much faster
+    # cross-tenant exfiltration path than iterating single lookups.
+    bulk_export_hits = grep_files(
+        target_dir,
+        r"(bulk|export)\w*.{0,100}(tenant_id|org_id|account_id|max_rows|max_export_rows|limit\s*=)",
+        "**/*.py",
+    )
+    results.append(CheckResult(
+        id="boundary_enforcement.bulk_export_scoping",
+        description="Bulk/export endpoints are tenant-scoped and row-capped",
+        passed=len(bulk_export_hits) > 0,
+        evidence=(
+            f"Found {len(bulk_export_hits)} reference(s): {bulk_export_hits[0][0]}:{bulk_export_hits[0][1]}"
+            if bulk_export_hits
+            else "No bulk/export/batch handler found with tenant scoping and a row cap"
+        ),
+        score_contribution=1,
+    ))
+
     return results

@@ -51,3 +51,34 @@ def test_score_dimension_minimum_not_silently_zeroed():
     result = score_dimension("boundary_enforcement", "Boundary Enforcement", [])
     assert result.insufficient_data is True
     assert result.level == 1
+
+
+def test_clario_passes_object_ownership_check():
+    """Clario's get_invoice/get_expense/void_invoice reject a non-owned resource by ID."""
+    checks = check_boundary_enforcement(CLARIO, {})
+    ownership = next(c for c in checks if c.id == "boundary_enforcement.object_ownership_check")
+    assert ownership.passed
+
+
+def test_clario_fails_bulk_export_scoping():
+    """Clario has no bulk/export endpoint at all - list_invoices/list_expenses return everything unbounded."""
+    checks = check_boundary_enforcement(CLARIO, {})
+    bulk = next(c for c in checks if c.id == "boundary_enforcement.bulk_export_scoping")
+    assert not bulk.passed
+
+
+def test_full_coverage_passes_new_checks():
+    checks = check_boundary_enforcement(FULL, {})
+    ids = [c.id for c in checks]
+    assert "boundary_enforcement.object_ownership_check" in ids
+    assert "boundary_enforcement.bulk_export_scoping" in ids
+    for c in checks:
+        assert c.passed
+
+
+def test_no_coverage_fails_new_checks():
+    checks = check_boundary_enforcement(NONE, {})
+    ownership = next(c for c in checks if c.id == "boundary_enforcement.object_ownership_check")
+    bulk = next(c for c in checks if c.id == "boundary_enforcement.bulk_export_scoping")
+    assert not ownership.passed
+    assert not bulk.passed

@@ -273,7 +273,9 @@ const SAMPLE_DATA = {
         { "id": "write_safety.idempotency_key", "description": "Idempotency-Key header referenced in source", "passed": true, "evidence": "Found 5 reference(s): api/expenses.py:7", "score_contribution": 2 },
         { "id": "write_safety.dedup_window", "description": "Deduplication store or window present", "passed": false, "evidence": "No deduplication window found - retried writes may be applied twice", "score_contribution": 2 },
         { "id": "write_safety.conditional_requests", "description": "Conditional-request guard (ETag / If-Match / optimistic lock) present", "passed": false, "evidence": "No conditional-request guard found; concurrent agent writes may corrupt state", "score_contribution": 1 },
-        { "id": "write_safety.idempotency_tests", "description": "Tests explicitly cover duplicate / idempotent request behavior", "passed": false, "evidence": "No idempotency/duplicate-request tests found", "score_contribution": 1 }
+        { "id": "write_safety.idempotency_tests", "description": "Tests explicitly cover duplicate / idempotent request behavior", "passed": false, "evidence": "No idempotency/duplicate-request tests found", "score_contribution": 1 },
+        { "id": "write_safety.dedup_expiry", "description": "Deduplication window has a bounded TTL/expiry", "passed": false, "evidence": "No TTL/expiry found on the dedup store - it can grow unbounded and never ages out old keys", "score_contribution": 1 },
+        { "id": "write_safety.multi_step_compensation", "description": "Multi-step writes have compensating/rollback handling", "passed": false, "evidence": "No transaction/rollback/compensation handling found - a write spanning multiple resources can fail halfway with no recovery", "score_contribution": 1 }
       ],
       "legibility_note": null,
       "insufficient_data": false
@@ -286,7 +288,9 @@ const SAMPLE_DATA = {
         { "id": "boundary_enforcement.tenant_filter", "description": "Tenant/org/account ID filter present in source", "passed": true, "evidence": "Found 22 reference(s): tests/test_expenses.py:14", "score_contribution": 2 },
         { "id": "boundary_enforcement.role_check", "description": "Role/permission enforcement present in source", "passed": true, "evidence": "Found 12 reference(s): api/auth.py:49", "score_contribution": 2 },
         { "id": "boundary_enforcement.adversarial_tests", "description": "Adversarial negative tests prove cross-tenant access is rejected", "passed": false, "evidence": "No adversarial cross-tenant tests found - isolation is asserted, not proven", "score_contribution": 2 },
-        { "id": "boundary_enforcement.scope_validation", "description": "Token/credential scope is validated at the handler level", "passed": true, "evidence": "Found 3 reference(s): api/auth.py:57", "score_contribution": 1 }
+        { "id": "boundary_enforcement.scope_validation", "description": "Token/credential scope is validated at the handler level", "passed": true, "evidence": "Found 3 reference(s): api/auth.py:57", "score_contribution": 1 },
+        { "id": "boundary_enforcement.object_ownership_check", "description": "Direct object lookups (single-resource GET/PATCH/DELETE) verify ownership", "passed": true, "evidence": "Found 4 reference(s): api/expenses.py:65", "score_contribution": 2 },
+        { "id": "boundary_enforcement.bulk_export_scoping", "description": "Bulk/export endpoints are tenant-scoped and row-capped", "passed": false, "evidence": "No bulk/export/batch handler found with tenant scoping and a row cap", "score_contribution": 1 }
       ],
       "legibility_note": null,
       "insufficient_data": false
@@ -294,12 +298,14 @@ const SAMPLE_DATA = {
     {
       "id": "consent_auth",
       "name": "Consent & Auth Surface",
-      "level": 4,
+      "level": 3,
       "check_results": [
         { "id": "consent_auth.scoped_tokens", "description": "Scoped / least-privilege token pattern present", "passed": true, "evidence": "Found 2 reference(s): api/auth.py:57", "score_contribution": 2 },
         { "id": "consent_auth.discoverable_auth", "description": "Auth metadata is machine-discoverable (OpenAPI securitySchemes or equivalent)", "passed": true, "evidence": "Found auth metadata in: openapi.yaml", "score_contribution": 2 },
         { "id": "consent_auth.per_tool_permission", "description": "Per-tool or per-endpoint permission declaration present", "passed": true, "evidence": "Found 8 reference(s): api/expenses.py:29", "score_contribution": 2 },
-        { "id": "consent_auth.token_expiry", "description": "Token expiry or rotation mechanism present", "passed": false, "evidence": "No token expiry or rotation mechanism found", "score_contribution": 1 }
+        { "id": "consent_auth.token_expiry", "description": "Token expiry or rotation mechanism present", "passed": false, "evidence": "No token expiry or rotation mechanism found", "score_contribution": 1 },
+        { "id": "consent_auth.token_revocation", "description": "Explicit token/session revocation mechanism present", "passed": false, "evidence": "No revocation mechanism found - a compromised token can only be waited out, not killed", "score_contribution": 2 },
+        { "id": "consent_auth.step_up_confirmation", "description": "Step-up confirmation required before destructive actions", "passed": false, "evidence": "No step-up/reauth pattern found - destructive actions require no more confirmation than a routine read", "score_contribution": 1 }
       ],
       "legibility_note": null,
       "insufficient_data": false
@@ -312,7 +318,9 @@ const SAMPLE_DATA = {
         { "id": "forensics.correlation_id", "description": "Correlation/trace/request ID propagated in source", "passed": true, "evidence": "Found 4 reference(s): api/audit.py:5", "score_contribution": 2 },
         { "id": "forensics.audit_log", "description": "Audit log or event emission present on write paths", "passed": true, "evidence": "Found 9 reference(s): tests/test_invoices.py:63", "score_contribution": 2 },
         { "id": "forensics.failure_auditing", "description": "Failure and rejection paths are also captured in audit trail", "passed": false, "evidence": "No audit entries on failure paths; audit trail covers only successes", "score_contribution": 2 },
-        { "id": "forensics.actor_identity", "description": "Actor identity (agent/user/service) recorded alongside each audited action", "passed": true, "evidence": "Found 8 reference(s): api/expenses.py:50", "score_contribution": 1 }
+        { "id": "forensics.actor_identity", "description": "Actor identity (agent/user/service) recorded alongside each audited action", "passed": true, "evidence": "Found 8 reference(s): api/expenses.py:50", "score_contribution": 1 },
+        { "id": "forensics.read_audit_logging", "description": "Sensitive reads are audit-logged, not just writes", "passed": false, "evidence": "No audit entries on read paths; an agent that reads and exfiltrates sensitive data leaves no trace", "score_contribution": 2 },
+        { "id": "forensics.append_only_audit", "description": "Audit trail storage exposes no update/delete path (append-only)", "passed": true, "evidence": "No update/delete calls found against audit log storage - consistent with append-only", "score_contribution": 2 }
       ],
       "legibility_note": null,
       "insufficient_data": false
@@ -320,12 +328,14 @@ const SAMPLE_DATA = {
     {
       "id": "interface_legibility",
       "name": "Interface Legibility",
-      "level": 4,
+      "level": 3,
       "check_results": [
         { "id": "interface_legibility.openapi_present", "description": "OpenAPI or tool schema file present", "passed": true, "evidence": "Found schema at: openapi.yaml", "score_contribution": 2 },
         { "id": "interface_legibility.operation_descriptions", "description": "Operation descriptions present in schema (not just names/summaries)", "passed": true, "evidence": "Descriptions found in: openapi.yaml", "score_contribution": 2 },
         { "id": "interface_legibility.structured_errors", "description": "Structured error schema with machine-readable error codes present", "passed": true, "evidence": "Found 10 reference(s): api/expenses.py:64", "score_contribution": 2 },
-        { "id": "interface_legibility.versioning", "description": "Deprecation or versioning signals present (agents can detect breaking changes)", "passed": false, "evidence": "No versioning or deprecation signals found", "score_contribution": 1 }
+        { "id": "interface_legibility.versioning", "description": "Deprecation or versioning signals present (agents can detect breaking changes)", "passed": false, "evidence": "No versioning or deprecation signals found", "score_contribution": 1 },
+        { "id": "interface_legibility.schema_examples", "description": "Request/response examples present in schema", "passed": false, "evidence": "No example/examples blocks found in schema; agent has only prose to infer valid request shapes", "score_contribution": 1 },
+        { "id": "interface_legibility.parameter_constraints", "description": "Machine-readable parameter constraints (enum/minimum/maximum/pattern) present on request parameters", "passed": false, "evidence": "No enum/minimum/maximum/pattern constraints found on request parameters; validation rules exist only in prose", "score_contribution": 1 }
       ],
       "legibility_note": null,
       "insufficient_data": false
@@ -338,7 +348,9 @@ const SAMPLE_DATA = {
         { "id": "operational_containment.timeouts", "description": "Timeout configuration present at tool/endpoint level", "passed": false, "evidence": "No timeout configuration found; runaway agent calls have no ceiling", "score_contribution": 2 },
         { "id": "operational_containment.rate_limits", "description": "Rate limiting or quota enforcement present", "passed": false, "evidence": "No rate limiting or quota found; a looping agent can exhaust resources", "score_contribution": 2 },
         { "id": "operational_containment.input_size_cap", "description": "Input size cap or payload size validation present", "passed": false, "evidence": "No input size cap found; agent-interpolated context could be arbitrarily large", "score_contribution": 1 },
-        { "id": "operational_containment.untrusted_input", "description": "Awareness of untrusted / agent-interpolated input surfaces (sanitization, content validation)", "passed": false, "evidence": "No untrusted-input handling found; agent-interpolated strings accepted verbatim", "score_contribution": 1 }
+        { "id": "operational_containment.untrusted_input", "description": "Awareness of untrusted / agent-interpolated input surfaces (sanitization, content validation)", "passed": false, "evidence": "No untrusted-input handling found; agent-interpolated strings accepted verbatim", "score_contribution": 1 },
+        { "id": "operational_containment.retry_after", "description": "Retry-After signal set alongside throttled/429 responses", "passed": false, "evidence": "No Retry-After header found on throttled responses; a throttled agent has no signal for how long to back off", "score_contribution": 1 },
+        { "id": "operational_containment.pagination_ceiling", "description": "Pagination or result-size ceiling present on list/query endpoints", "passed": false, "evidence": "No page_size/limit ceiling found on list endpoints; an agent can pull unbounded data in one call", "score_contribution": 1 }
       ],
       "legibility_note": null,
       "insufficient_data": false
